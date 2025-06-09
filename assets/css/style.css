@@ -15,9 +15,10 @@
     padding: 10px;
 }
 
-#userRoleDropdown{
-margin-bottom: 20px;
-
+#userRoleDropdown,
+#courseDropdown,
+#groupDropdown {
+    margin-bottom: 20px;
 }
 
 
