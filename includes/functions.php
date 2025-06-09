@@ -22,9 +22,10 @@ class UserBatchProcessor {
      * @param bool $enviar_email Se deve enviar email para os usuários
      * @param string $role Função do usuário no WordPress
      * @param int $curso_id ID do curso para matricular os usuários
+     * @param int $grupo_id ID do grupo para adicionar os usuários
      * @return array Resultados do processamento
      */
-    public function processar($usuarios, $senha, $enviar_email, $role, $curso_id) {
+    public function processar($usuarios, $senha, $enviar_email, $role, $curso_id, $grupo_id) {
         $linhas = explode("\n", $usuarios);
         $this->total_usuarios = count(array_filter($linhas, 'trim'));
         $batch_emails = [];
@@ -88,14 +89,21 @@ class UserBatchProcessor {
             // Verifica se o usuário já existe usando o array pré-carregado
             if (isset($existing_users[$email])) {
                 $user_id = $existing_users[$email];
-                
-                // Se o usuário já existe e tem um curso selecionado, matricula direto
+
+                $acoes = [];
                 if ($curso_id > 0 && function_exists('ld_update_course_access')) {
                     ld_update_course_access($user_id, $curso_id);
-                    $this->resultados[] = "O usuário $email já existe no sistema e foi matriculado no curso selecionado com sucesso";
+                    $acoes[] = 'matriculado no curso';
                 }
-                else {
-                    $this->resultados[] = "O usuário $email já existe no sistema. Selecione um curso para matriculá-lo";
+                if ($grupo_id > 0 && function_exists('ld_update_group_access')) {
+                    ld_update_group_access($user_id, $grupo_id);
+                    $acoes[] = 'adicionado ao grupo';
+                }
+
+                if ($acoes) {
+                    $this->resultados[] = "O usuário $email já existe no sistema e foi " . implode(' e ', $acoes) . ' com sucesso';
+                } else {
+                    $this->resultados[] = "O usuário $email já existe no sistema. Selecione um curso ou grupo para associá-lo";
                 }
                 continue;
             }
@@ -114,13 +122,20 @@ class UserBatchProcessor {
                 'role' => $role
             ]);
 
-            // Matricular usuário no curso selecionado
+            $mensagem = "Sucesso: $email";
+            $acoes_novas = [];
             if ($curso_id > 0 && function_exists('ld_update_course_access')) {
                 ld_update_course_access($user_id, $curso_id);
-                $this->resultados[] = "Sucesso: $email (matriculado no curso)";
-            } else {
-                $this->resultados[] = "Sucesso: $email";
+                $acoes_novas[] = 'matriculado no curso';
             }
+            if ($grupo_id > 0 && function_exists('ld_update_group_access')) {
+                ld_update_group_access($user_id, $grupo_id);
+                $acoes_novas[] = 'adicionado ao grupo';
+            }
+            if ($acoes_novas) {
+                $mensagem .= ' (' . implode(' e ', $acoes_novas) . ')';
+            }
+            $this->resultados[] = $mensagem;
 
             // Armazenar para envio em lote
             if ($enviar_email) {
@@ -181,11 +196,12 @@ function cadastrar_usuarios_em_lote_page() {
         $senha = sanitize_text_field($_POST['senha']);
         $enviar_email = isset($_POST['enviar_email']);
         $role = sanitize_text_field($_POST['role']);  // Função do usuário
-        $curso_id = isset($_POST['curso_id']) ? intval($_POST['curso_id']) : 0;
+        $curso_id  = isset($_POST['curso_id'])  ? intval($_POST['curso_id'])  : 0;
+        $grupo_id = isset($_POST['grupo_id']) ? intval($_POST['grupo_id']) : 0;
 
         // Usar o processador de lote para cadastrar os usuários
         $processador = new UserBatchProcessor();
-        $resultados = $processador->processar($usuarios, $senha, $enviar_email, $role, $curso_id);
+        $resultados = $processador->processar($usuarios, $senha, $enviar_email, $role, $curso_id, $grupo_id);
 
         echo '<div id="message" class="updated notice is-dismissible"><p>';
         echo implode('<br>', array_map('esc_html', $resultados));
@@ -229,6 +245,27 @@ function cadastrar_usuarios_em_lote_page() {
             echo '<option value="0">Nenhum curso</option>';
             foreach ($cursos as $curso) {
                 echo '<option value="' . esc_attr($curso->ID) . '">' . esc_html($curso->post_title) . '</option>';
+            }
+            echo '</select>';
+        }
+    }
+
+    // Adicionar dropdown de grupos do LearnDash
+    if (post_type_exists('groups')) {
+        $args = [
+            'post_type'      => 'groups',
+            'posts_per_page' => -1,
+            'orderby'        => 'title',
+            'order'          => 'ASC',
+        ];
+        $grupos = get_posts($args);
+
+        if (!empty($grupos)) {
+            echo '<p>Selecione o grupo para adicionar os usuários:</p>';
+            echo '<select name="grupo_id" id="groupDropdown">';
+            echo '<option value="0">Nenhum grupo</option>';
+            foreach ($grupos as $grupo) {
+                echo '<option value="' . esc_attr($grupo->ID) . '">' . esc_html($grupo->post_title) . '</option>';
             }
             echo '</select>';
         }
