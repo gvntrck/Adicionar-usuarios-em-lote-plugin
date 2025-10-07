@@ -5,7 +5,7 @@
  * Author Email: gvntrck@gmail.com
  * Author URI: http://projetoalfa.org/
  * Description: Plugin para cadastrar usuários em lote no WordPress.
- * Version: 4.2.1
+ * Version: 4.2.2
  * License: GPLv2 or later
  */
 
