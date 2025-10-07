@@ -11,6 +11,7 @@ function get_plugin_version() {
 class UserBatchProcessor {
     private $resultados = [];
     private $usuarios_para_email = [];
+    private $usuarios_com_senha = [];
     private $total_usuarios = 0;
     private $processados = 0;
 
@@ -20,12 +21,13 @@ class UserBatchProcessor {
      * @param string $usuarios Lista de usuários no formato email,nome
      * @param string $senha Senha padrão ou vazia para gerar senha aleatória
      * @param bool $enviar_email Se deve enviar email para os usuários
+     * @param bool $enviar_senha Se deve enviar a senha por email
      * @param string $role Função do usuário no WordPress
      * @param int $curso_id ID do curso para matricular os usuários
      * @param int $grupo_id ID do grupo para adicionar os usuários
      * @return array Resultados do processamento
      */
-    public function processar($usuarios, $senha, $enviar_email, $role, $curso_id, $grupo_id) {
+    public function processar($usuarios, $senha, $enviar_email, $enviar_senha, $role, $curso_id, $grupo_id) {
         $linhas = explode("\n", $usuarios);
         $this->total_usuarios = count(array_filter($linhas, 'trim'));
         $batch_emails = [];
@@ -141,10 +143,21 @@ class UserBatchProcessor {
             if ($enviar_email) {
                 $this->usuarios_para_email[] = $user_id;
             }
+            
+            // Armazenar senha para envio por email
+            if ($enviar_senha) {
+                $this->usuarios_com_senha[] = [
+                    'user_id' => $user_id,
+                    'email' => $email,
+                    'nome' => $primeiro_nome,
+                    'senha' => $senha_usuario
+                ];
+            }
         }
         
         // Processar e-mails em lote após todos os usuários terem sido criados
         $this->processar_emails_em_lote();
+        $this->enviar_senhas_por_email();
         
         return $this->resultados;
     }
@@ -179,6 +192,37 @@ class UserBatchProcessor {
     }
     
     /**
+     * Envia as senhas por email para os usuários
+     */
+    private function enviar_senhas_por_email() {
+        if (empty($this->usuarios_com_senha)) {
+            return;
+        }
+        
+        foreach ($this->usuarios_com_senha as $usuario_info) {
+            $to = $usuario_info['email'];
+            $subject = 'Seus dados de acesso - ' . get_bloginfo('name');
+            
+            $message = "Olá {$usuario_info['nome']},\n\n";
+            $message .= "Sua conta foi criada com sucesso!\n\n";
+            $message .= "Seus dados de acesso são:\n";
+            $message .= "Email: {$usuario_info['email']}\n";
+            $message .= "Senha: {$usuario_info['senha']}\n\n";
+            $message .= "Acesse o site em: " . wp_login_url() . "\n\n";
+            $message .= "Recomendamos que você altere sua senha após o primeiro acesso.\n\n";
+            $message .= "Atenciosamente,\n";
+            $message .= get_bloginfo('name');
+            
+            $headers = ['Content-Type: text/plain; charset=UTF-8'];
+            
+            wp_mail($to, $subject, $message, $headers);
+            
+            // Pequena pausa para evitar sobrecarga do servidor SMTP
+            usleep(250000); // 0.25 segundos
+        }
+    }
+    
+    /**
      * Retorna o progresso atual do processamento
      */
     public function get_progresso() {
@@ -195,13 +239,14 @@ function cadastrar_usuarios_em_lote_page() {
         $usuarios = trim($usuarios);  // Remover espaços em branco e linhas extras
         $senha = sanitize_text_field($_POST['senha']);
         $enviar_email = isset($_POST['enviar_email']);
+        $enviar_senha = isset($_POST['enviar_senha']);
         $role = sanitize_text_field($_POST['role']);  // Função do usuário
         $curso_id  = isset($_POST['curso_id'])  ? intval($_POST['curso_id'])  : 0;
         $grupo_id = isset($_POST['grupo_id']) ? intval($_POST['grupo_id']) : 0;
 
         // Usar o processador de lote para cadastrar os usuários
         $processador = new UserBatchProcessor();
-        $resultados = $processador->processar($usuarios, $senha, $enviar_email, $role, $curso_id, $grupo_id);
+        $resultados = $processador->processar($usuarios, $senha, $enviar_email, $enviar_senha, $role, $curso_id, $grupo_id);
 
         echo '<div id="message" class="updated notice is-dismissible"><p>';
         echo implode('<br>', array_map('esc_html', $resultados));
@@ -272,7 +317,10 @@ function cadastrar_usuarios_em_lote_page() {
     }
 
     echo '<br>';
-    echo '<label style="margin-top: 20px;"><input type="checkbox" name="enviar_email"> Enviar e-mail para novos usuários (com link para redefinição)</label>';
+    echo '<div style="margin-top: 20px;">';
+    echo '<label style="display: block; margin-bottom: 10px;"><input type="checkbox" name="enviar_email"> Enviar e-mail de boas-vindas (com link para redefinição de senha)</label>';
+    echo '<label style="display: block; margin-bottom: 10px;"><input type="checkbox" name="enviar_senha"> Enviar senha por e-mail (recomendado para facilitar o acesso)</label>';
+    echo '</div>';
     echo '<input type="submit" value="Cadastrar Usuários" id="submit-button">';
     echo '<div id="progress-container" style="display:none; margin-top: 20px;">';
     echo '<p>Processando usuários... Por favor, não feche esta página.</p>';
