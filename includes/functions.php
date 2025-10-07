@@ -41,7 +41,7 @@ class UserBatchProcessor {
             $partes = explode(',', $linha);
             if (count($partes) < 2) continue;
             
-            $email = sanitize_email($partes[0]);
+            $email = trim($partes[0]);
             if (is_email($email)) {
                 $emails[] = $email;
             }
@@ -78,7 +78,7 @@ class UserBatchProcessor {
                 continue;
             }
 
-            $email = sanitize_email($partes[0]);
+            $email = trim($partes[0]);
             $primeiro_nome = sanitize_text_field($partes[1]);
 
             if (!is_email($email)) {
