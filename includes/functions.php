@@ -38,11 +38,17 @@ class UserBatchProcessor {
             if (empty($linha)) continue;
             
             $partes = explode(',', $linha);
-            if (count($partes) < 2) continue;
             
-            // Sanitizar mantendo o + para alias de email
-            $email = strtolower(sanitize_text_field(trim($partes[0])));
-            if (is_email($email)) {
+            // Detectar formato automaticamente (email,nome ou nome,email ou apenas email)
+            $email = null;
+            if (count($partes) === 1) {
+                $email = strtolower(sanitize_text_field(trim($partes[0])));
+            } else {
+                $parte0 = strtolower(sanitize_text_field(trim($partes[0])));
+                $parte1 = strtolower(sanitize_text_field(trim($partes[1])));
+                $email = is_email($parte0) ? $parte0 : (is_email($parte1) ? $parte1 : null);
+            }
+            if ($email && is_email($email)) {
                 $emails[] = $email;
             }
         }
@@ -73,17 +79,35 @@ class UserBatchProcessor {
             $this->processados++;
             
             $partes = explode(',', $linha);
-            if (count($partes) < 2) {
-                $this->resultados[] = "Erro: linha inválida - $linha";
-                continue;
+            
+            // Detectar formato automaticamente (email,nome ou nome,email ou apenas email)
+            $email = null;
+            $primeiro_nome = '';
+            
+            if (count($partes) === 1) {
+                // Apenas email fornecido
+                $email = strtolower(sanitize_text_field(trim($partes[0])));
+                if (is_email($email)) {
+                    // Extrair nome do email (parte antes do @)
+                    $primeiro_nome = ucfirst(explode('@', $email)[0]);
+                }
+            } else {
+                $parte0 = sanitize_text_field(trim($partes[0]));
+                $parte1 = sanitize_text_field(trim($partes[1]));
+                
+                if (is_email($parte0)) {
+                    // Formato: email,nome
+                    $email = strtolower($parte0);
+                    $primeiro_nome = $parte1 ?: ucfirst(explode('@', $email)[0]);
+                } elseif (is_email($parte1)) {
+                    // Formato: nome,email
+                    $email = strtolower($parte1);
+                    $primeiro_nome = $parte0 ?: ucfirst(explode('@', $email)[0]);
+                }
             }
 
-            // Sanitizar mantendo o + para alias de email
-            $email = strtolower(sanitize_text_field(trim($partes[0])));
-            $primeiro_nome = sanitize_text_field(trim($partes[1]));
-
-            if (!is_email($email)) {
-                $this->resultados[] = "Erro: email inválido - $email";
+            if (!$email || !is_email($email)) {
+                $this->resultados[] = "Erro: email inválido na linha - $linha";
                 continue;
             }
 
@@ -257,11 +281,13 @@ function cadastrar_usuarios_em_lote_page() {
     // Campos para adicionar email e inserir a senha padrão, se houver
     echo '<form id="cadastrar-usuarios-form" method="post">';
     wp_nonce_field('cadastrar_usuarios_em_lote');
-    echo '<textarea name="usuarios" placeholder="email,nome"></textarea>';
+    echo '<textarea name="usuarios" placeholder="email,nome ou nome,email ou apenas email"></textarea>';
     echo '<div class="formato-instrucao" style="margin-top: 2px; margin-bottom: 5px; color: #666;">';
-    echo '<strong>Formato:</strong> Insira um usuário por linha no formato <code>email,nome</code><br>';
+    echo '<strong>Formato:</strong> Insira um usuário por linha. Aceita:<br>';
+    echo '&bull; <code>email,nome</code> ou <code>nome,email</code> (detecta automaticamente)<br>';
+    echo '&bull; <code>email</code> (nome será extraído do email)<br>';
     echo '<em>Exemplo:</em><br>';
-    echo '<code>usuario1@exemplo.com,João<br>usuario2@exemplo.com,Maria</code>';
+    echo '<code>usuario1@exemplo.com,João<br>Maria,usuario2@exemplo.com<br>usuario3@exemplo.com</code>';
     echo '</div>';
     echo '<p>Senha padrão, se ficar em branco uma senha única e aleatória será gerada.</p>';
     echo '<input type="password" name="senha" placeholder="Senha padrão (opcional)">';
