@@ -30,7 +30,6 @@ class UserBatchProcessor {
     public function processar($usuarios, $senha, $enviar_email, $enviar_senha, $role, $curso_id, $grupo_id) {
         $linhas = explode("\n", $usuarios);
         $this->total_usuarios = count(array_filter($linhas, 'trim'));
-        $batch_emails = [];
         
         // Verificar emails existentes em lote (reduz consultas ao banco)
         $emails = [];
@@ -42,7 +41,7 @@ class UserBatchProcessor {
             if (count($partes) < 2) continue;
             
             // Sanitizar mantendo o + para alias de email
-            $email = sanitize_text_field(trim($partes[0]));
+            $email = strtolower(sanitize_text_field(trim($partes[0])));
             if (is_email($email)) {
                 $emails[] = $email;
             }
@@ -60,7 +59,7 @@ class UserBatchProcessor {
             $results = $wpdb->get_results($query);
             
             foreach ($results as $user) {
-                $existing_users[$user->user_email] = $user->ID;
+                $existing_users[strtolower($user->user_email)] = $user->ID;
             }
         }
         
@@ -80,8 +79,8 @@ class UserBatchProcessor {
             }
 
             // Sanitizar mantendo o + para alias de email
-            $email = sanitize_text_field(trim($partes[0]));
-            $primeiro_nome = sanitize_text_field($partes[1]);
+            $email = strtolower(sanitize_text_field(trim($partes[0])));
+            $primeiro_nome = sanitize_text_field(trim($partes[1]));
 
             if (!is_email($email)) {
                 $this->resultados[] = "Erro: email inválido - $email";
