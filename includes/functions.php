@@ -304,10 +304,11 @@ function cadastrar_usuarios_em_lote_page() {
     // Adicionar dropdown de cursos do LearnDash
     if (function_exists('ld_course_list')) {
         $args = array(
-            'post_type' => 'sfwd-courses',
+            'post_type'      => 'sfwd-courses',
+            'post_status'    => 'publish',
             'posts_per_page' => -1,
-            'orderby' => 'title',
-            'order' => 'ASC'
+            'orderby'        => 'title',
+            'order'          => 'ASC'
         );
         $cursos = get_posts($args);
 
