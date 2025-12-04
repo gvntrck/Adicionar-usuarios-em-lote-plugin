@@ -5,7 +5,7 @@
  * Author Email: gvntrck@gmail.com
  * Author URI: http://projetoalfa.org/
  * Description: Plugin para cadastrar usuários em lote no WordPress. Integração com LearnDash para matricular em cursos e grupos
- * Version: 4.3.2
+ * Version: 4.3.3
  * License: GPLv2 or later
  */
 

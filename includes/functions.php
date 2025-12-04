@@ -259,7 +259,7 @@ class UserBatchProcessor {
 function cadastrar_usuarios_em_lote_page() {
     // Verificar se o usuário tem permissão para acessar esta página
     if (!current_user_can('manage_options')) {
-        wp_die(__('Você não tem permissão para acessar esta página.', 'cadastrar-usuarios-lote'));
+        wp_die(__('Você não tem permissão para acessar esta página.', 'cadastrar-usuarios-em-lote'));
     }
     
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
