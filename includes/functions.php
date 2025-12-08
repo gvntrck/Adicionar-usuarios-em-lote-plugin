@@ -22,12 +22,12 @@ class UserBatchProcessor {
      * @param string $senha Senha padrão ou vazia para gerar senha aleatória
      * @param bool $enviar_email Se deve enviar email para os usuários
      * @param bool $enviar_senha Se deve enviar a senha por email
-     * @param string $role Função do usuário no WordPress
+     * @param array $roles Funções do usuário no WordPress
      * @param int $curso_id ID do curso para matricular os usuários
      * @param int $grupo_id ID do grupo para adicionar os usuários
      * @return array Resultados do processamento
      */
-    public function processar($usuarios, $senha, $enviar_email, $enviar_senha, $role, $curso_id, $grupo_id) {
+    public function processar($usuarios, $senha, $enviar_email, $enviar_senha, $roles, $curso_id, $grupo_id) {
         $linhas = explode("\n", $usuarios);
         $this->total_usuarios = count(array_filter($linhas, 'trim'));
         
@@ -142,12 +142,21 @@ class UserBatchProcessor {
                 continue;
             }
 
-            // Atualizar usuário com a função e o primeiro nome
+            // Atualizar usuário com o primeiro nome
             wp_update_user([
                 'ID' => $user_id,
-                'first_name' => $primeiro_nome,
-                'role' => $role
+                'first_name' => $primeiro_nome
             ]);
+
+            // Atribuir múltiplas roles ao usuário
+            $user = new WP_User($user_id);
+            // Remove a role padrão 'subscriber' se outras roles foram selecionadas
+            if (!empty($roles)) {
+                $user->set_role(''); // Limpa todas as roles
+                foreach ($roles as $role) {
+                    $user->add_role($role);
+                }
+            }
 
             $mensagem = "Sucesso: $email";
             $acoes_novas = [];
@@ -270,13 +279,15 @@ function cadastrar_usuarios_em_lote_page() {
         $senha = sanitize_text_field($_POST['senha']);
         $enviar_email = isset($_POST['enviar_email']);
         $enviar_senha = isset($_POST['enviar_senha']);
-        $role = sanitize_text_field($_POST['role']);  // Função do usuário
+        $roles = isset($_POST['roles']) && is_array($_POST['roles']) 
+            ? array_map('sanitize_text_field', $_POST['roles']) 
+            : ['subscriber'];  // Funções do usuário
         $curso_id  = isset($_POST['curso_id'])  ? intval($_POST['curso_id'])  : 0;
         $grupo_id = isset($_POST['grupo_id']) ? intval($_POST['grupo_id']) : 0;
 
         // Usar o processador de lote para cadastrar os usuários
         $processador = new UserBatchProcessor();
-        $resultados = $processador->processar($usuarios, $senha, $enviar_email, $enviar_senha, $role, $curso_id, $grupo_id);
+        $resultados = $processador->processar($usuarios, $senha, $enviar_email, $enviar_senha, $roles, $curso_id, $grupo_id);
 
         echo '<div id="message" class="updated notice is-dismissible"><p>';
         echo implode('<br>', array_map('esc_html', $resultados));
@@ -297,14 +308,19 @@ function cadastrar_usuarios_em_lote_page() {
     echo '<p>Senha padrão, se ficar em branco uma senha única e aleatória será gerada.</p>';
     echo '<input type="password" name="senha" placeholder="Senha padrão (opcional)">';
 
-    // Dropdown para função do usuário
-    echo '<p>Selecione a função no site:</p>';
-    echo '<select name="role" id="userRoleDropdown">';
+    // Checkboxes para funções do usuário (permite múltipla seleção)
+    echo '<p>Selecione a(s) função(ões) no site:</p>';
+    echo '<div id="userRolesCheckboxes" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; background: #fff;">';
     global $wp_roles;
     foreach ($wp_roles->roles as $key => $value) {
-        echo '<option value="' . esc_attr($key) . '"' . selected($key, 'subscriber', false) . '>' . esc_html($value['name']) . '</option>';
+        $checked = ($key === 'subscriber') ? ' checked' : '';
+        echo '<label style="display: block; margin-bottom: 5px; cursor: pointer;">';
+        echo '<input type="checkbox" name="roles[]" value="' . esc_attr($key) . '"' . $checked . '> ';
+        echo esc_html($value['name']);
+        echo '</label>';
     }
-    echo '</select>';
+    echo '</div>';
+    echo '<small style="color: #666;">Selecione uma ou mais funções. O usuário terá todas as permissões das funções selecionadas.</small>';
 
     // Adicionar dropdown de cursos do LearnDash
     if (function_exists('ld_course_list')) {
