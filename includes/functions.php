@@ -116,8 +116,27 @@ class UserBatchProcessor {
             // Verifica se o usuário já existe usando o array pré-carregado
             if (isset($existing_users[$email])) {
                 $user_id = $existing_users[$email];
+                $user = new WP_User($user_id);
 
                 $acoes = [];
+                
+                // Adicionar novas roles que o usuário ainda não possui
+                if (!empty($roles)) {
+                    $roles_atuais = $user->roles;
+                    $roles_novas_adicionadas = [];
+                    
+                    foreach ($roles as $role) {
+                        if (!in_array($role, $roles_atuais)) {
+                            $user->add_role($role);
+                            $roles_novas_adicionadas[] = $role;
+                        }
+                    }
+                    
+                    if (!empty($roles_novas_adicionadas)) {
+                        $acoes[] = 'roles adicionadas: ' . implode(', ', $roles_novas_adicionadas);
+                    }
+                }
+                
                 if ($curso_id > 0 && function_exists('ld_update_course_access')) {
                     ld_update_course_access($user_id, $curso_id);
                     $acoes[] = 'matriculado no curso';
@@ -128,9 +147,9 @@ class UserBatchProcessor {
                 }
 
                 if ($acoes) {
-                    $this->resultados[] = "O usuário $email já existe no sistema e foi " . implode(' e ', $acoes) . ' com sucesso';
+                    $this->resultados[] = "O usuário $email já existe no sistema e foi atualizado: " . implode(', ', $acoes);
                 } else {
-                    $this->resultados[] = "O usuário $email já existe no sistema. Selecione um curso ou grupo para associá-lo";
+                    $this->resultados[] = "O usuário $email já existe no sistema e já possui as roles selecionadas";
                 }
                 continue;
             }
