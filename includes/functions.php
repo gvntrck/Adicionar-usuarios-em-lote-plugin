@@ -161,10 +161,16 @@ class UserBatchProcessor {
                 continue;
             }
 
-            // Atualizar usuário com o primeiro nome
+            // Separar primeiro nome e sobrenome
+            $nome_partes = explode(' ', $primeiro_nome, 2);
+            $first_name = $nome_partes[0];
+            $last_name = isset($nome_partes[1]) ? $nome_partes[1] : '';
+            
+            // Atualizar usuário com primeiro nome e sobrenome
             wp_update_user([
                 'ID' => $user_id,
-                'first_name' => $primeiro_nome
+                'first_name' => $first_name,
+                'last_name' => $last_name
             ]);
 
             // Atribuir múltiplas roles ao usuário
