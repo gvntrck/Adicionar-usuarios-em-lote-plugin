@@ -4,6 +4,177 @@ function get_plugin_version() {
     return $plugin_data['Version'];
 }
 
+function cadastrar_usuarios_em_lote_obter_nome_destinatario($nome) {
+    $nome = trim((string) $nome);
+
+    if ($nome === '') {
+        return '';
+    }
+
+    return $nome;
+}
+
+function cadastrar_usuarios_em_lote_renderizar_email_html($args) {
+    $site_name = wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES);
+    $preheader = isset($args['preheader']) ? trim((string) $args['preheader']) : '';
+    $greeting = isset($args['greeting']) ? trim((string) $args['greeting']) : 'Olá,';
+    $title = isset($args['title']) ? trim((string) $args['title']) : '';
+    $paragraphs = isset($args['paragraphs']) && is_array($args['paragraphs']) ? $args['paragraphs'] : [];
+    $details = isset($args['details']) && is_array($args['details']) ? $args['details'] : [];
+    $button_text = isset($args['button_text']) ? trim((string) $args['button_text']) : '';
+    $button_url = isset($args['button_url']) ? (string) $args['button_url'] : '';
+    $note = isset($args['note']) ? trim((string) $args['note']) : '';
+    $secondary_text = isset($args['secondary_text']) ? trim((string) $args['secondary_text']) : '';
+    $footer = isset($args['footer']) ? trim((string) $args['footer']) : 'Atenciosamente,';
+
+    $paragraphs_html = '';
+    foreach ($paragraphs as $paragraph) {
+        $paragraph = trim((string) $paragraph);
+        if ($paragraph === '') {
+            continue;
+        }
+
+        $paragraphs_html .= '<p style="margin:0 0 16px 0; font-family:Arial, Helvetica, sans-serif; font-size:16px; line-height:24px; color:#374151;">' . esc_html($paragraph) . '</p>';
+    }
+
+    $details_html = '';
+    if (!empty($details)) {
+        $details_html .= '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse; margin:0 0 20px 0;">';
+
+        foreach ($details as $label => $value) {
+            $value = trim((string) $value);
+            if ($value === '') {
+                continue;
+            }
+
+            $details_html .= '<tr>';
+            $details_html .= '<td valign="top" style="padding:10px 0; border-bottom:1px solid #e5e7eb; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:20px; color:#6b7280; width:120px;"><strong>' . esc_html($label) . '</strong></td>';
+            $details_html .= '<td valign="top" style="padding:10px 0; border-bottom:1px solid #e5e7eb; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:20px; color:#111827;">' . esc_html($value) . '</td>';
+            $details_html .= '</tr>';
+        }
+
+        $details_html .= '</table>';
+    }
+
+    $button_html = '';
+    if ($button_text !== '' && $button_url !== '') {
+        $button_html = '<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 20px 0; border-collapse:collapse;">';
+        $button_html .= '<tr>';
+        $button_html .= '<td align="center" bgcolor="#2271b1" style="border-radius:4px;">';
+        $button_html .= '<a href="' . esc_url($button_url) . '" target="_blank" style="display:inline-block; padding:12px 22px; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:18px; font-weight:bold; color:#ffffff; text-decoration:none;">' . esc_html($button_text) . '</a>';
+        $button_html .= '</td>';
+        $button_html .= '</tr>';
+        $button_html .= '</table>';
+    }
+
+    $note_html = '';
+    if ($note !== '') {
+        $note_html = '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse; margin:0 0 20px 0;">';
+        $note_html .= '<tr>';
+        $note_html .= '<td style="padding:14px 16px; background-color:#f9fafb; border:1px solid #e5e7eb; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:22px; color:#4b5563;">' . esc_html($note) . '</td>';
+        $note_html .= '</tr>';
+        $note_html .= '</table>';
+    }
+
+    $secondary_html = '';
+    if ($secondary_text !== '' && $button_url !== '') {
+        $secondary_html = '<p style="margin:0 0 8px 0; font-family:Arial, Helvetica, sans-serif; font-size:13px; line-height:20px; color:#6b7280;">' . esc_html($secondary_text) . '</p>';
+        $secondary_html .= '<p style="margin:0 0 20px 0; font-family:Arial, Helvetica, sans-serif; font-size:13px; line-height:20px; color:#2271b1; word-break:break-all;">' . esc_html($button_url) . '</p>';
+    }
+
+    ob_start();
+    ?>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?php echo esc_html($title); ?></title>
+</head>
+<body style="margin:0; padding:0; background-color:#f3f4f6;">
+    <?php if ($preheader !== '') : ?>
+        <div style="display:none; max-height:0; overflow:hidden; opacity:0; mso-hide:all; font-size:1px; line-height:1px; color:#ffffff;">
+            <?php echo esc_html($preheader); ?>
+        </div>
+    <?php endif; ?>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse; width:100%; background-color:#f3f4f6; margin:0; padding:0;">
+        <tr>
+            <td align="center" style="padding:24px 12px;">
+                <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse; width:100%; max-width:600px;">
+                    <tr>
+                        <td style="height:4px; line-height:4px; font-size:0; background-color:#2271b1;">&nbsp;</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:32px 28px; background-color:#ffffff; border:1px solid #e5e7eb;">
+                            <p style="margin:0 0 8px 0; font-family:Arial, Helvetica, sans-serif; font-size:12px; line-height:18px; color:#2271b1; font-weight:bold; text-transform:uppercase; letter-spacing:0.5px;"><?php echo esc_html($site_name); ?></p>
+                            <h1 style="margin:0 0 20px 0; font-family:Arial, Helvetica, sans-serif; font-size:24px; line-height:30px; color:#111827; font-weight:bold;"><?php echo esc_html($title); ?></h1>
+                            <p style="margin:0 0 16px 0; font-family:Arial, Helvetica, sans-serif; font-size:16px; line-height:24px; color:#111827;"><?php echo esc_html($greeting); ?></p>
+                            <?php echo $paragraphs_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                            <?php echo $details_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                            <?php echo $button_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                            <?php echo $note_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                            <?php echo $secondary_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                            <p style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:22px; color:#374151;"><?php echo esc_html($footer); ?><br><?php echo esc_html($site_name); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:16px 8px 0 8px; font-family:Arial, Helvetica, sans-serif; font-size:12px; line-height:18px; color:#6b7280; text-align:center;">
+                            Esta mensagem foi enviada automaticamente por <?php echo esc_html($site_name); ?>.
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+    <?php
+
+    return ob_get_clean();
+}
+
+function cadastrar_usuarios_em_lote_enviar_email_boas_vindas($user_id) {
+    $user = get_user_by('id', $user_id);
+    if (!($user instanceof WP_User)) {
+        return false;
+    }
+
+    $reset_key = get_password_reset_key($user);
+    if (is_wp_error($reset_key)) {
+        return false;
+    }
+
+    $site_name = get_bloginfo('name');
+    $nome = cadastrar_usuarios_em_lote_obter_nome_destinatario($user->first_name ?: $user->display_name ?: $user->user_login);
+    $subject = 'Bem-vindo(a) - ' . $site_name;
+    $reset_url = network_site_url(
+        'wp-login.php?action=rp&key=' . $reset_key . '&login=' . rawurlencode($user->user_login),
+        'login'
+    );
+    $login_url = wp_login_url();
+    $message = cadastrar_usuarios_em_lote_renderizar_email_html([
+        'preheader' => 'Sua conta foi criada e já está pronta para o primeiro acesso.',
+        'greeting' => $nome !== '' ? 'Olá ' . $nome . ',' : 'Olá,',
+        'title' => 'Sua conta foi criada',
+        'paragraphs' => [
+            'Sua conta foi criada com sucesso no site ' . $site_name . '.',
+            'Para definir sua senha e concluir o primeiro acesso, use o botão abaixo.'
+        ],
+        'button_text' => 'Definir senha',
+        'button_url' => $reset_url,
+        'secondary_text' => 'Se o botão não funcionar, copie e cole este link no navegador:',
+        'note' => 'Depois de definir a senha, acesse sua conta em ' . $login_url . '.',
+        'footer' => 'Atenciosamente,'
+    ]);
+
+    return wp_mail(
+        $user->user_email,
+        $subject,
+        $message,
+        ['Content-Type: text/html; charset=UTF-8']
+    );
+}
+
 /**
  * Classe responsável pelo processamento de usuários em lote
  * Seguindo princípio SRP (Single Responsibility Principle) do SOLID
@@ -241,7 +412,8 @@ class UserBatchProcessor {
         
         foreach ($batches as $batch) {
             foreach ($batch as $user_id) {
-                wp_new_user_notification($user_id, null, 'both');
+                wp_new_user_notification($user_id, null, 'admin');
+                cadastrar_usuarios_em_lote_enviar_email_boas_vindas($user_id);
             }
             // Pequena pausa entre lotes para evitar sobrecarga do servidor SMTP
             if (count($batches) > 1) {
@@ -261,18 +433,28 @@ class UserBatchProcessor {
         foreach ($this->usuarios_com_senha as $usuario_info) {
             $to = $usuario_info['email'];
             $subject = 'Seus dados de acesso - ' . get_bloginfo('name');
-            
-            $message = "Olá {$usuario_info['nome']},\n\n";
-            $message .= "Sua conta foi criada com sucesso!\n\n";
-            $message .= "Seus dados de acesso são:\n";
-            $message .= "Email: {$usuario_info['email']}\n";
-            $message .= "Senha: {$usuario_info['senha']}\n\n";
-            $message .= "Acesse o site em: " . wp_login_url() . "\n\n";
-            $message .= "Recomendamos que você altere sua senha após o primeiro acesso.\n\n";
-            $message .= "Atenciosamente,\n";
-            $message .= get_bloginfo('name');
-            
-            $headers = ['Content-Type: text/plain; charset=UTF-8'];
+
+            $nome = cadastrar_usuarios_em_lote_obter_nome_destinatario($usuario_info['nome']);
+            $message = cadastrar_usuarios_em_lote_renderizar_email_html([
+                'preheader' => 'Seus dados de acesso ao site já estão disponíveis.',
+                'greeting' => $nome !== '' ? 'Olá ' . $nome . ',' : 'Olá,',
+                'title' => 'Seus dados de acesso',
+                'paragraphs' => [
+                    'Sua conta foi criada com sucesso.',
+                    'Abaixo estão os dados para acessar o site.'
+                ],
+                'details' => [
+                    'E-mail' => $usuario_info['email'],
+                    'Senha' => $usuario_info['senha']
+                ],
+                'button_text' => 'Acessar o site',
+                'button_url' => wp_login_url(),
+                'secondary_text' => 'Se o botão não funcionar, copie e cole este link no navegador:',
+                'note' => 'Recomendamos que você altere sua senha após o primeiro acesso.',
+                'footer' => 'Atenciosamente,'
+            ]);
+
+            $headers = ['Content-Type: text/html; charset=UTF-8'];
             
             wp_mail($to, $subject, $message, $headers);
             
