@@ -14,8 +14,29 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+require 'plugin-update-checker/plugin-update-checker.php';
+use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
+
+$myUpdateChecker = PucFactory::buildUpdateChecker(
+    'https://github.com/gvntrck/Adicionar-usuarios-em-lote-plugin',
+    __FILE__,
+    'Adicionar-usuarios-em-lote-plugin'
+);
+
+//Set the branch that contains the stable release.
+$myUpdateChecker->setBranch('main');
+
+//Optional: If you're using a private repository, specify the access token like this:
+$myUpdateChecker->setAuthentication('your-token-here');
+
+
+
+
+
+
 // Carregar scripts e estilos
-function enqueue_cadastrar_usuarios_em_lote_scripts() {
+function enqueue_cadastrar_usuarios_em_lote_scripts()
+{
     wp_enqueue_script('cadastrar-usuarios-js', plugin_dir_url(__FILE__) . 'assets/js/main.js', ['jquery'], '1.0.0', true);
     wp_enqueue_style('cadastrar-usuarios-css', plugin_dir_url(__FILE__) . 'assets/css/style.css', [], '1.0.0');
 
@@ -23,7 +44,8 @@ function enqueue_cadastrar_usuarios_em_lote_scripts() {
 add_action('admin_enqueue_scripts', 'enqueue_cadastrar_usuarios_em_lote_scripts');
 
 // Adicionar menu no painel admin
-function cadastrar_usuarios_em_lote_menu() {
+function cadastrar_usuarios_em_lote_menu()
+{
     add_menu_page('Cadastrar Usuários em Lote', 'Cadastrar Usuários', 'manage_options', 'cadastrar-usuarios-em-lote', 'cadastrar_usuarios_em_lote_page', 'dashicons-groups', 6);
 }
 add_action('admin_menu', 'cadastrar_usuarios_em_lote_menu');
