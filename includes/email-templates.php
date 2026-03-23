@@ -414,12 +414,26 @@ function cadastrar_usuarios_em_lote_email_templates_page() {
     echo '<p class="description">Os placeholders serão preenchidos com valores de exemplo.</p>';
     echo '<p class="submit">';
     echo '<button type="submit" name="cul_email_template_action" value="save" class="button button-primary">Salvar mensagem</button> ';
+    echo '<button type="button" id="cul-open-template-preview" class="button">Ver prévia</button> ';
     echo '<button type="submit" name="cul_email_template_action" value="send_test" class="button">Enviar e-mail de teste</button> ';
     if ($editing_template_id !== '') {
         echo '<a href="' . esc_url(admin_url('admin.php?page=cadastrar-usuarios-em-lote-mensagens')) . '" class="button">Nova mensagem</a>';
     }
     echo '</p>';
+    echo '<p class="description">A prévia é estática e mostra exatamente o HTML digitado no editor, sem substituir placeholders.</p>';
     echo '</form>';
+    echo '<div id="cul-template-preview-modal" class="cul-preview-modal" hidden>';
+    echo '<div class="cul-preview-modal__backdrop" data-cul-modal-close="true"></div>';
+    echo '<div class="cul-preview-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="cul-template-preview-title">';
+    echo '<div class="cul-preview-modal__header">';
+    echo '<h3 id="cul-template-preview-title">Prévia da mensagem</h3>';
+    echo '<button type="button" class="button-link cul-preview-modal__close" data-cul-modal-close="true" aria-label="Fechar prévia">&times;</button>';
+    echo '</div>';
+    echo '<p class="cul-preview-modal__subject-label">Assunto</p>';
+    echo '<p id="cul-template-preview-subject" class="cul-preview-modal__subject">(Sem assunto)</p>';
+    echo '<iframe id="cul-template-preview-frame" class="cul-preview-modal__frame" title="Prévia estática da mensagem"></iframe>';
+    echo '</div>';
+    echo '</div>';
     echo '</div>';
 
     echo '<div class="cul-admin-card cul-admin-card-list">';

@@ -5,7 +5,7 @@
  * Author Email: gvntrck@gmail.com
  * Author URI: http://projetoalfa.org/
  * Description: Plugin para cadastrar usuários em lote no WordPress. Integração com LearnDash para matricular em cursos e grupos
- * Version: 4.8.1
+ * Version: 4.8.2
  * License: GPLv2 or later
  */
 
@@ -44,7 +44,7 @@ function enqueue_cadastrar_usuarios_em_lote_scripts($hook)
         return;
     }
 
-    $version = function_exists('get_plugin_version') ? get_plugin_version() : '4.8.1';
+    $version = function_exists('get_plugin_version') ? get_plugin_version() : '4.8.2';
     wp_enqueue_script('cadastrar-usuarios-js', plugin_dir_url(__FILE__) . 'assets/js/main.js', ['jquery'], $version, true);
     wp_enqueue_style('cadastrar-usuarios-css', plugin_dir_url(__FILE__) . 'assets/css/style.css', [], $version);
 
