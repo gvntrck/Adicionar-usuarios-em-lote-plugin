@@ -1,6 +1,6 @@
 /* Estilização do formulário */
 #cadastrar-usuarios-form {
-    max-width: 600px;
+    max-width: 760px;
     margin: 20px auto;
     padding: 20px;
     border: 1px solid #ccc;
@@ -17,8 +17,12 @@
 
 #userRoleDropdown,
 #courseDropdown,
-#groupDropdown {
+#groupDropdown,
+#cul-email-template-select,
+#cul-email-template-scope {
+    width: 100%;
     margin-bottom: 20px;
+    min-height: 40px;
 }
 
 
@@ -37,4 +41,65 @@
 /* Barra de progresso */
 #progress-bar {
     width: 100%;
+}
+
+.cul-email-selection-box {
+    margin-top: 20px;
+    padding: 16px;
+    border: 1px solid #dcdcde;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.cul-email-selection-box h3 {
+    margin-top: 0;
+}
+
+.cul-admin-grid {
+    display: grid;
+    grid-template-columns: minmax(420px, 1fr) minmax(380px, 520px);
+    gap: 24px;
+    align-items: start;
+    margin-top: 20px;
+}
+
+.cul-admin-card {
+    padding: 20px;
+    background: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 10px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.cul-admin-card-form .CodeMirror {
+    border: 1px solid #dcdcde;
+    height: 420px;
+}
+
+.cul-email-template-table th,
+.cul-email-template-table td,
+.cul-email-placeholders-table th,
+.cul-email-placeholders-table td {
+    vertical-align: top;
+}
+
+.cul-email-template-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.cul-email-template-actions form {
+    margin: 0;
+}
+
+.cul-button-danger {
+    color: #b32d2e;
+    border-color: #d63638;
+}
+
+@media (max-width: 1100px) {
+    .cul-admin-grid {
+        grid-template-columns: 1fr;
+    }
 }
